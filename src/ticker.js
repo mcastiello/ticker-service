@@ -207,7 +207,7 @@ const playAnimationFrame = () => {
  */
 const storeFrameRateHistory = () => {
     if (delta > 0) {
-        const frameRate = 1000 / delta;
+        const frameRate = Math.min(1000 / delta, ticker.maxFrameRate);
 
         frameRateHistory.unshift(frameRate);
 
