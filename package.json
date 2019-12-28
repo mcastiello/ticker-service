@@ -1,0 +1,30 @@
+{
+  "name": "ticker",
+  "version": "1.0.0",
+  "description": "A service used to create animation loops in a simple way and to keep everything in sync within an app.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcastiello/ticker.git"
+  },
+  "keywords": [],
+  "author": "Marco Castiello",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mcastiello/ticker/issues"
+  },
+  "homepage": "https://github.com/mcastiello/ticker#readme",
+  "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.7.5",
+    "jest": "^24.9.0",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}
