@@ -1,8 +1,8 @@
 {
   "name": "ticker-service",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A service used to create animation loops in a simple way and to keep everything in sync within an app.",
-  "main": "index.js",
+  "main": "dist/ticker-service.js",
   "directories": {
     "test": "test"
   },
