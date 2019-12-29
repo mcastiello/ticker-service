@@ -5,20 +5,26 @@
  * Project: Ticker.js
  */
 
-const TickerService = require('../src/ticker').default;
+// Extracting the original timing functions from the Window object.
+const originalSetTimeout = window.setTimeout;
+const originalClearTimeout = window.clearTimeout;
+const originalSetInterval = window.setInterval;
+const originalClearInterval = window.clearInterval;
+const originalRequestAnimationFrame = window.requestAnimationFrame;
+const originalCancelAnimationFrame = window.cancelAnimationFrame;
 
-const ticker = new TickerService();
+const ticker = require('../src/ticker-service').default;
 
 describe('Ticker Initialisation', () => {
     it("should replace timing functions with internal ones", () => {
         expect(ticker.useWindowFunctions).toBeFalsy();
 
-        expect(setTimeout === ticker.setTimeout).toBeTruthy();
-        expect(clearTimeout === ticker.clearTimeout).toBeTruthy();
-        expect(setInterval === ticker.setInterval).toBeTruthy();
-        expect(clearInterval === ticker.clearInterval).toBeTruthy();
-        expect(requestAnimationFrame === ticker.requestAnimationFrame).toBeTruthy();
-        expect(cancelAnimationFrame === ticker.cancelAnimationFrame).toBeTruthy();
+        expect(setTimeout === originalSetTimeout).toBeFalsy();
+        expect(clearTimeout === originalClearTimeout).toBeFalsy();
+        expect(setInterval === originalSetInterval).toBeFalsy();
+        expect(clearInterval === originalClearInterval).toBeFalsy();
+        expect(requestAnimationFrame === originalRequestAnimationFrame).toBeFalsy();
+        expect(cancelAnimationFrame === originalCancelAnimationFrame).toBeFalsy();
 
         expect(ticker.isRunning).toBeTruthy();
     });
@@ -27,12 +33,12 @@ describe('Ticker Initialisation', () => {
 
         expect(ticker.useWindowFunctions).toBeTruthy();
 
-        expect(setTimeout === ticker.setTimeout).toBeFalsy();
-        expect(clearTimeout === ticker.clearTimeout).toBeFalsy();
-        expect(setInterval === ticker.setInterval).toBeFalsy();
-        expect(clearInterval === ticker.clearInterval).toBeFalsy();
-        expect(requestAnimationFrame === ticker.requestAnimationFrame).toBeFalsy();
-        expect(cancelAnimationFrame === ticker.cancelAnimationFrame).toBeFalsy();
+        expect(setTimeout === originalSetTimeout).toBeTruthy();
+        expect(clearTimeout === originalClearTimeout).toBeTruthy();
+        expect(setInterval === originalSetInterval).toBeTruthy();
+        expect(clearInterval === originalClearInterval).toBeTruthy();
+        expect(requestAnimationFrame === originalRequestAnimationFrame).toBeTruthy();
+        expect(cancelAnimationFrame === originalCancelAnimationFrame).toBeTruthy();
 
         ticker.useWindowFunctions = false;
     });
