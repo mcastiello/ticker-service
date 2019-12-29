@@ -6,6 +6,218 @@
  */
 
 /**
+ * Reference to the original 'setTimeout' function.
+ * @type {Function}
+ * @private
+ */
+const originalSetTimeout = window.setTimeout;
+
+/**
+ * Reference to the original 'clearTimeout' function.
+ * @type {Function}
+ * @private
+ */
+const originalClearTimeout = window.clearTimeout;
+
+/**
+ * Reference to the original 'setInterval' function.
+ * @type {Function}
+ * @private
+ */
+const originalSetInterval = window.setInterval;
+
+/**
+ * Reference to the original 'clearInterval' function.
+ * @type {Function}
+ * @private
+ */
+const originalClearInterval = window.clearInterval;
+
+/**
+ * Reference to the original 'requestAnimationFrame' function.
+ * @type {Function}
+ * @private
+ */
+const originalRequestAnimationFrame = window.requestAnimationFrame;
+
+/**
+ * Reference to the original 'cancelAnimationFrame' function.
+ * @type {Function}
+ * @private
+ */
+const originalCancelAnimationFrame = window.cancelAnimationFrame;
+
+/**
+ * Current index generated for a ticker method.
+ * @type {Number}
+ * @private
+ */
+let currentIndex = 10000;
+
+/**
+ * Current running time of the ticker since it was last started.
+ * @type {Number}
+ * @private
+ */
+let currentTime = 0;
+
+/**
+ * Delta time since the last tick.
+ * @type {Number}
+ * @private
+ */
+let delta = 0;
+
+/**
+ * Flag used to toggle the window functions with the ticker ones.
+ * @type {Boolean}
+ * @private
+ */
+let useWindowFunctions = true;
+
+/**
+ * Running status of the ticker.
+ * @type {Boolean}
+ * @private
+ */
+let running = false;
+
+/**
+ * List of the latest frames registered.
+ * @type {Array}
+ * @private
+ */
+const frameRateHistory = [];
+
+/**
+ * List of all the ticker callbacks.
+ * @type {Object}
+ * @private
+ */
+const tickerCallbacks = {};
+
+/**
+ * Get the current timestamp.
+ * @returns {Number}
+ */
+const getTime = () => {
+    if (window.performance) {
+        return performance.now();
+    } else {
+        return Date.now();
+    }
+};
+
+/**
+ * Clear one of the ticker callbacks.
+ * @param {Number} index
+ * @private
+ */
+const clearTickerCallback = index => {
+    delete tickerCallbacks[index];
+};
+
+/**
+ * Register a ticker callback.
+ * @param {Function} callback
+ * @param {Array} params
+ * @param {Number} repeats
+ * @param {Number} delay
+ * @returns {Number}
+ * @private
+ */
+const createTickerCallback = (callback, params, repeats, delay) => {
+    if (typeof delay !== "number" || delay <= 0) {
+        throw new Error("Delay must be a positive number.");
+    }
+    if (typeof repeats !== "number" || repeats <= 0) {
+        throw new Error("A callback must be executed at least once.");
+    }
+
+    const index = currentIndex++;
+
+    tickerCallbacks[index] = {
+        "callback": callback,
+        "params": params,
+        "repeats": repeats,
+        "delay": delay,
+        "count": 0,
+        "executionTime": 0,
+        "totalTime": currentTime - getTime()
+    };
+
+    return index;
+};
+
+/**
+ * Execute all the callbacks that have requested to be run at the current frame.
+ * @param {Number} delta
+ * @private
+ */
+const tick = delta => {
+    const tickers = Object.keys(tickerCallbacks);
+    let i, ii;
+
+    for (i=0, ii=tickers.length; i<ii; i++) {
+        const tickerId = Number(tickers[i]);
+        const ticker = tickerCallbacks[tickerId];
+
+        ticker.totalTime += delta;
+
+        const tickerTime = ticker.totalTime - ticker.executionTime;
+
+        if (tickerTime >= ticker.delay) {
+            ticker.callback(...ticker.params, tickerTime, ticker.count);
+
+            ticker.count++;
+            ticker.executionTime = ticker.totalTime;
+
+            if (ticker.count >= ticker.repeats) {
+                clearTickerCallback(tickerId);
+            }
+        }
+    }
+};
+
+/**
+ * Create the main animation loop.
+ * @private
+ */
+const playAnimationFrame = () => {
+    originalRequestAnimationFrame(() => {
+        if (running) {
+            const time = getTime();
+            delta = currentTime ? time - currentTime : 0;
+
+            if (delta) {
+                tick(delta);
+            }
+            currentTime = time;
+
+            storeFrameRateHistory();
+
+            playAnimationFrame();
+        }
+    });
+};
+
+/**
+ * Store a frame into the history.
+ * @private
+ */
+const storeFrameRateHistory = () => {
+    if (delta > 0) {
+        const frameRate = Math.min(1000 / delta, ticker.maxFrameRate);
+
+        frameRateHistory.unshift(frameRate);
+
+        if (frameRateHistory.length > 120) {
+            frameRateHistory.length = 120;
+        }
+    }
+};
+
+/**
  * Define a service used to keep all the timing functions in sync by replacing the
  * internal JavaScript timer with one based on a frame animation loop.
  * All the timing functions will be overridden with the service once and some other
@@ -14,125 +226,17 @@
  */
 class TickerService {
 
-    /**
-     * Reference to the original 'setTimeout' function.
-     * @type {Function}
-     * @private
-     */
-    #originalSetTimeout = null;
-
-    /**
-     * Reference to the original 'clearTimeout' function.
-     * @type {Function}
-     * @private
-     */
-    #originalClearTimeout = null;
-
-    /**
-     * Reference to the original 'setInterval' function.
-     * @type {Function}
-     * @private
-     */
-    #originalSetInterval = null;
-
-    /**
-     * Reference to the original 'clearInterval' function.
-     * @type {Function}
-     * @private
-     */
-    #originalClearInterval = null;
-
-    /**
-     * Reference to the original 'requestAnimationFrame' function.
-     * @type {Function}
-     * @private
-     */
-    #originalRequestAnimationFrame = null;
-
-    /**
-     * Reference to the original 'cancelAnimationFrame' function.
-     * @type {Function}
-     * @private
-     */
-    #originalCancelAnimationFrame = null;
-
-    /**
-     * Current index generated for a ticker method.
-     * @type {Number}
-     * @private
-     */
-    #currentIndex = 10000;
-
-    /**
-     * Current running time of the ticker since it was last started.
-     * @type {Number}
-     * @private
-     */
-    #currentTime = 0;
-
-    /**
-     * Delta time since the last tick.
-     * @type {Number}
-     * @private
-     */
-    #delta = 0;
-
-    /**
-     * Flag used to toggle the window functions with the ticker ones.
-     * @type {Boolean}
-     * @private
-     */
-    #useWindowFunctions = true;
-
-    /**
-     * Running status of the ticker.
-     * @type {Boolean}
-     * @private
-     */
-    #running = false;
-
-    /**
-     * List of the latest frames registered.
-     * @type {Array}
-     * @private
-     */
-    #frameRateHistory = null;
-
-    /**
-     * List of all the ticker callbacks.
-     * @type {Object}
-     * @private
-     */
-    #tickerCallbacks = null;
-
-    /**
-     * Initialise the ticker.
-     * @constructor
-     */
     constructor() {
-
-        // Extracting the original timing functions from the Window object.
-        this.#originalSetTimeout = window.setTimeout;
-        this.#originalClearTimeout = window.clearTimeout;
-        this.#originalSetInterval = window.setInterval;
-        this.#originalClearInterval = window.clearInterval;
-        this.#originalRequestAnimationFrame = window.requestAnimationFrame;
-        this.#originalCancelAnimationFrame = window.cancelAnimationFrame;
-
         // Force the service to replace the JavaScript timing functions with the service ones.
         this.useWindowFunctions = false;
 
         // Export new timing functions along side the usual ones.
-        window.setAnimationLoop = this.setAnimationLoop;
-        window.clearAnimationLoop = this.clearAnimationLoop;
-        window.setCounter = this.setCounter;
-        window.clearCounter = this.clearCounter;
-        window.sleep = this.sleep;
-        window.frame = this.frame;
-
-        // Initialising the internal properties.
-        this.#frameRateHistory = [];
-        this.#tickerCallbacks = {};
+        window.setAnimationLoop = (...params) => this.setAnimationLoop(...params);
+        window.clearAnimationLoop = (index) => this.clearAnimationLoop(index);
+        window.setCounter = (...params) => this.setCounter(...params);
+        window.clearCounter = (index) => this.clearCounter(index);
+        window.sleep = (time) => this.sleep(time);
+        window.frame = () => this.frame();
 
         // Start the service.
         this.start();
@@ -143,7 +247,7 @@ class TickerService {
      * @returns {Number}
      */
     get frameRate() {
-        return this.#delta ? Math.min(1000/this.#delta, this.maxFrameRate) : this.maxFrameRate;
+        return delta ? Math.min(1000/delta, this.maxFrameRate) : this.maxFrameRate;
     }
 
     /**
@@ -151,7 +255,7 @@ class TickerService {
      * @returns {Number}
      */
     get maxFrameRate() {
-        return this.#delta ? Math.round((1000/this.#delta)/30)*30 : 60;
+        return delta ? Math.round((1000/delta)/30)*30 : 60;
     }
 
     /**
@@ -159,8 +263,8 @@ class TickerService {
      * @returns {Number}
      */
     get averageFrameRate() {
-        return this.#frameRateHistory.length ?
-            this.#frameRateHistory.reduce((value, total) => value + total) / this.#frameRateHistory.length :
+        return frameRateHistory.length ?
+            frameRateHistory.reduce((value, total) => value + total) / frameRateHistory.length :
             this.frameRate;
     }
 
@@ -180,7 +284,7 @@ class TickerService {
      * @returns {Boolean}
      */
     get isRunning() {
-        return this.#running;
+        return running;
     }
 
     /**
@@ -188,7 +292,7 @@ class TickerService {
      * @returns {Boolean}
      */
     get useWindowFunctions() {
-        return this.#useWindowFunctions;
+        return useWindowFunctions;
     }
 
     /**
@@ -198,16 +302,16 @@ class TickerService {
     set useWindowFunctions(value) {
         value = Boolean(value);
 
-        if (value !== this.#useWindowFunctions)
+        if (value !== useWindowFunctions)
         {
-            window.setTimeout = value ? this.#originalSetTimeout : (...params) => this.setTimeout(...params);
-            window.clearTimeout = value ? this.#originalClearTimeout : (index) => this.clearTimeout(index);
-            window.setInterval = value ? this.#originalSetInterval : (...params) => this.setInterval(...params);
-            window.clearInterval = value ? this.#originalClearInterval : (index) => this.clearInterval(index);
-            window.requestAnimationFrame = value ? this.#originalRequestAnimationFrame : (...params) => this.requestAnimationFrame(...params);
-            window.cancelAnimationFrame = value ? this.#originalCancelAnimationFrame : (index) => this.cancelAnimationFrame(index);
+            window.setTimeout = value ? originalSetTimeout : (...params) => this.setTimeout(...params);
+            window.clearTimeout = value ? originalClearTimeout : (index) => this.clearTimeout(index);
+            window.setInterval = value ? originalSetInterval : (...params) => this.setInterval(...params);
+            window.clearInterval = value ? originalClearInterval : (index) => this.clearInterval(index);
+            window.requestAnimationFrame = value ? originalRequestAnimationFrame : (...params) => this.requestAnimationFrame(...params);
+            window.cancelAnimationFrame = value ? originalCancelAnimationFrame : (index) => this.cancelAnimationFrame(index);
 
-            this.#useWindowFunctions = value;
+            useWindowFunctions = value;
         }
     }
 
@@ -220,7 +324,7 @@ class TickerService {
      */
     setTimeout(callback, time, ...params) {
         time = time || 1;
-        return this.#createTickerCallback(callback, params, 1, time);
+        return createTickerCallback(callback, params, 1, time);
     }
 
     /**
@@ -228,7 +332,7 @@ class TickerService {
      * @param {Number} index
      */
     clearTimeout(index) {
-        this.#clearTickerCallback(index);
+        clearTickerCallback(index);
     }
 
     /**
@@ -239,7 +343,7 @@ class TickerService {
      * @returns {Number}
      */
     setInterval(callback, time, ...params) {
-        return this.#createTickerCallback(callback, params, Infinity, time);
+        return createTickerCallback(callback, params, Infinity, time);
     }
 
     /**
@@ -247,7 +351,7 @@ class TickerService {
      * @param {Number} index
      */
     clearInterval(index) {
-        this.#clearTickerCallback(index);
+        clearTickerCallback(index);
     }
 
     /**
@@ -259,7 +363,7 @@ class TickerService {
      * @returns {Number}
      */
     setCounter(callback, time, repeats, ...params) {
-        return this.#createTickerCallback(callback, params, repeats, time);
+        return createTickerCallback(callback, params, repeats, time);
     }
 
     /**
@@ -267,7 +371,7 @@ class TickerService {
      * @param {Number} index
      */
     clearCounter(index) {
-        this.#clearTickerCallback(index);
+        clearTickerCallback(index);
     }
 
     /**
@@ -276,7 +380,7 @@ class TickerService {
      * @returns {Number}
      */
     requestAnimationFrame(callback) {
-        return this.#createTickerCallback(callback, [], 1, 1);
+        return createTickerCallback(callback, [], 1, 1);
     }
 
     /**
@@ -284,18 +388,18 @@ class TickerService {
      * @param {Number} index
      */
     cancelAnimationFrame(index) {
-        this.#clearTickerCallback(index);
+        clearTickerCallback(index);
     }
 
     /**
      * Create an animation loop where the callback will be executed at every frame.
      * It is possible to specify a frame rate different from the browser one.
      * @param {Function} callback
-     * @param {Number} [frameRate]
+     * @param {Number} frameRate
      * @returns {Number}
      */
     setAnimationLoop(callback, frameRate) {
-        return this.#createTickerCallback(callback, [], Infinity, frameRate ? 1000/frameRate : 1);
+        return createTickerCallback(callback, [], Infinity, frameRate ? 1000/frameRate : 1);
     }
 
     /**
@@ -303,7 +407,7 @@ class TickerService {
      * @param {Number} index
      */
     clearAnimationLoop(index) {
-        this.#clearTickerCallback(index);
+        clearTickerCallback(index);
     }
 
     /**
@@ -328,10 +432,10 @@ class TickerService {
      * @returns {TickerService}
      */
     start() {
-        if (!this.#running) {
-            this.#running = true;
-            this.#currentTime = this.#getTime();
-            this.#playAnimationFrame(this);
+        if (!running) {
+            running = true;
+            currentTime = getTime();
+            playAnimationFrame(this);
         }
 
         return this;
@@ -342,135 +446,12 @@ class TickerService {
      * @returns {TickerService}
      */
     stop() {
-        this.#running = false;
+        running = false;
         return this;
-    }
-
-    /*******************/
-    /* PRIVATE METHODS */
-    /*******************/
-
-
-    /**
-     * Get the current timestamp.
-     * @returns {Number}
-     */
-    #getTime() {
-        if (window.performance) {
-            return performance.now();
-        } else {
-            return Date.now();
-        }
-    }
-
-    /**
-     * Clear one of the ticker callbacks.
-     * @param {Number} index
-     * @private
-     */
-    #clearTickerCallback(index) {
-        delete this.#tickerCallbacks[index];
-    }
-
-    /**
-     * Register a ticker callback.
-     * @param {Function} callback
-     * @param {Array} params
-     * @param {Number} repeats
-     * @param {Number} delay
-     * @returns {Number}
-     * @private
-     */
-    #createTickerCallback(callback, params, repeats, delay) {
-        if (typeof delay !== "number" || delay <= 0) {
-            throw new Error("Delay must be a positive number.");
-        }
-        if (typeof repeats !== "number" || repeats <= 0) {
-            throw new Error("A callback must be executed at least once.");
-        }
-
-        const index = this.#currentIndex++;
-
-        this.#tickerCallbacks[index] = {
-            "callback": callback,
-            "params": params,
-            "repeats": repeats,
-            "delay": delay,
-            "count": 0,
-            "executionTime": 0,
-            "totalTime": this.#currentTime - this.#getTime()
-        };
-
-        return index;
-    }
-
-    /**
-     * Execute all the callbacks that have requested to be run at the current frame.
-     * @param {Number} delta
-     * @private
-     */
-    #tick(delta) {
-        const tickers = Object.keys(this.#tickerCallbacks);
-        let i, ii;
-
-        for (i=0, ii=tickers.length; i<ii; i++) {
-            const tickerId = Number(tickers[i]);
-            const ticker = this.#tickerCallbacks[tickerId];
-
-            ticker.totalTime += this.#delta;
-
-            const tickerTime = ticker.totalTime - ticker.executionTime;
-
-            if (tickerTime >= ticker.delay) {
-                ticker.callback(...ticker.params, tickerTime, ticker.count);
-
-                ticker.count++;
-                ticker.executionTime = ticker.totalTime;
-
-                if (ticker.count >= ticker.repeats) {
-                    this.#clearTickerCallback(tickerId);
-                }
-            }
-        }
-    }
-
-    /**
-     * Create the main animation loop.
-     * @private
-     */
-    #playAnimationFrame() {
-        this.#originalRequestAnimationFrame(() => {
-            if (this.#running) {
-                const time = this.#getTime();
-                this.#delta = this.#currentTime ? time - this.#currentTime : 0;
-
-                if (this.#delta) {
-                    this.#tick(this.#delta);
-                }
-                this.#currentTime = time;
-
-                this.#storeFrameRateHistory();
-
-                this.#playAnimationFrame();
-            }
-        });
-    }
-
-    /**
-     * Store a frame into the history.
-     * @private
-     */
-    #storeFrameRateHistory() {
-        if (this.#delta > 0) {
-            const frameRate = Math.min(1000 / this.#delta, this.maxFrameRate);
-
-            this.#frameRateHistory.unshift(frameRate);
-
-            if (this.#frameRateHistory.length > 120) {
-                this.#frameRateHistory.length = 120;
-            }
-        }
     }
 }
 
-export default new TickerService();
+// Create unique instance of the service.
+const ticker = new TickerService();
+
+export default ticker;

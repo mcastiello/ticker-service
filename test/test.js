@@ -60,7 +60,7 @@ describe("Ticker Timing Functions", () => {
         const initial = Date.now();
         const timeout = 1000;
 
-        const delta = await sleep(timeout);
+        await sleep(timeout);
 
         const final = Date.now();
 

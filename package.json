@@ -1,6 +1,6 @@
 {
   "name": "ticker-service",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "A service used to create animation loops in a simple way and to keep everything in sync within an app.",
   "main": "src/ticker-service.js",
   "directories": {
@@ -22,12 +22,7 @@
   },
   "homepage": "https://github.com/mcastiello/ticker#readme",
   "devDependencies": {
-    "@babel/core": "^7.7.7",
-    "@babel/plugin-proposal-class-properties": "^7.7.4",
-    "@babel/plugin-proposal-private-methods": "^7.7.4",
     "@babel/plugin-transform-modules-commonjs": "^7.7.5",
-    "@babel/preset-env": "^7.7.7",
-    "babel-loader": "^8.0.6",
     "jest": "^24.9.0",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"

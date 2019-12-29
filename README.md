@@ -133,3 +133,13 @@ or you can checkout the repository and build it on your own by calling
 ```
 npm run build
 ```
+And finally you just need to import the ticker in every module that needs it.
+```javascript
+// If installed through npm
+import ticker from 'ticker-service';
+// If built manually
+import ticker from './dist/ticker-service'
+
+// If you want to have it accessible outside modules, just export it into the Window object.
+window.ticker = ticker;
+```
