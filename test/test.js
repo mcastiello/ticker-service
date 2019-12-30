@@ -2,22 +2,22 @@
  * Copyright (c) 2019
  * Author: Marco Castiello
  * E-mail: marco.castiello@gmail.com
- * Project: Ticker.js
+ * Project: Ticker Service
  */
 
 // Extracting the original timing functions from the Window object.
-const originalSetTimeout = window.setTimeout;
-const originalClearTimeout = window.clearTimeout;
-const originalSetInterval = window.setInterval;
-const originalClearInterval = window.clearInterval;
-const originalRequestAnimationFrame = window.requestAnimationFrame;
-const originalCancelAnimationFrame = window.cancelAnimationFrame;
+const originalSetTimeout = self.setTimeout;
+const originalClearTimeout = self.clearTimeout;
+const originalSetInterval = self.setInterval;
+const originalClearInterval = self.clearInterval;
+const originalRequestAnimationFrame = self.requestAnimationFrame;
+const originalCancelAnimationFrame = self.cancelAnimationFrame;
 
 const ticker = require('../src/ticker-service').default;
 
 describe('Ticker Initialisation', () => {
     it("should replace timing functions with internal ones", () => {
-        expect(ticker.useWindowFunctions).toBeFalsy();
+        expect(ticker.useScopeFunctions).toBeFalsy();
 
         expect(setTimeout === originalSetTimeout).toBeFalsy();
         expect(clearTimeout === originalClearTimeout).toBeFalsy();
@@ -29,9 +29,9 @@ describe('Ticker Initialisation', () => {
         expect(ticker.isRunning).toBeTruthy();
     });
     it("should be able to restore the original timing functions", () => {
-        ticker.useWindowFunctions = true;
+        ticker.useScopeFunctions = true;
 
-        expect(ticker.useWindowFunctions).toBeTruthy();
+        expect(ticker.useScopeFunctions).toBeTruthy();
 
         expect(setTimeout === originalSetTimeout).toBeTruthy();
         expect(clearTimeout === originalClearTimeout).toBeTruthy();
@@ -40,7 +40,7 @@ describe('Ticker Initialisation', () => {
         expect(requestAnimationFrame === originalRequestAnimationFrame).toBeTruthy();
         expect(cancelAnimationFrame === originalCancelAnimationFrame).toBeTruthy();
 
-        ticker.useWindowFunctions = false;
+        ticker.useScopeFunctions = false;
     });
 });
 
