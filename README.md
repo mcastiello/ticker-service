@@ -1,4 +1,4 @@
-# Ticker.js
+# Ticker Service
 This service is supposed to override all the internal JavaScript timing functions (`setTimeout`, `setInterval` and `requestAnimationFrame`) in order to use a single animation loop to keep all of them in sync.
 
 The ticker will also add a series of new timing functions that may make your life a little bit easier.
