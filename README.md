@@ -116,15 +116,11 @@ setTimeout(() => {
     console.log("Delta", final-initial);
 }, 3000);
 
-// Stop the service and restore the original timing functions.
+// Stop the service (which will automatically restore the original timing functions).
 ticker.stop();
-ticker.useScopeFunctions = true;
 
 // Use the original timeout to restart the service.
-setTimeout(() => {
-    ticker.useScopeFunctions = false;
-    ticker.start();
-}, 1000);
+setTimeout(() => ticker.start(), 1000);
 ```
 The timeout created at the beginning should run for 3 seconds, but because the service has been stopped and restarted after a second, the function will log a delta of 4 seconds (-ish).
 ### Properties
