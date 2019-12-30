@@ -2,7 +2,7 @@
  * Copyright (c) 2019
  * Author: Marco Castiello
  * E-mail: marco.castiello@gmail.com
- * Project: Ticker.js
+ * Project: Ticker Service
  */
 
 const path = require('path');
