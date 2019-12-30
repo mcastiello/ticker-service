@@ -2,7 +2,7 @@
  * Copyright (c) 2019
  * Author: Marco Castiello
  * E-mail: marco.castiello@gmail.com
- * Project: Ticker.js
+ * Project: Ticker Service
  */
 
 /**
@@ -67,6 +67,13 @@ let currentTime = 0;
  * @private
  */
 let delta = 0;
+
+/**
+ * Reference to the latest frame request.
+ * @type {Number}
+ * @private
+ */
+let animationFrameRequest = null;
 
 /**
  * Flag used to toggle the scope functions with the ticker ones.
@@ -184,7 +191,7 @@ const tick = delta => {
  * @private
  */
 const playAnimationFrame = () => {
-    originalRequestAnimationFrame(() => {
+    animationFrameRequest = originalRequestAnimationFrame(() => {
         if (running) {
             const time = getTime();
             delta = currentTime ? time - currentTime : 0;
@@ -227,9 +234,6 @@ const storeFrameRateHistory = () => {
 class TickerService {
 
     constructor() {
-        // Force the service to replace the JavaScript timing functions with the service ones.
-        this.useScopeFunctions = false;
-
         // Export new timing functions along side the usual ones.
         self.setAnimationLoop = (...params) => this.setAnimationLoop(...params);
         self.clearAnimationLoop = (index) => this.clearAnimationLoop(index);
@@ -433,8 +437,14 @@ class TickerService {
      */
     start() {
         if (!running) {
+            // Force the service to replace the JavaScript timing functions with the service ones.
+            this.useScopeFunctions = false;
+
+            // Initialise the properties.
             running = true;
             currentTime = getTime();
+            
+            // Kick-off the animation loop
             playAnimationFrame(this);
         }
 
@@ -446,7 +456,15 @@ class TickerService {
      * @returns {TickerService}
      */
     stop() {
+        // Update the state of the service.
         running = false;
+        
+        // Stop the execution of the latest frame.
+        originalCancelAnimationFrame(animationFrameRequest);
+        
+        // Restore the original timing functions.
+        this.useScopeFunctions = true;
+        
         return this;
     }
 }
