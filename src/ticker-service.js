@@ -10,42 +10,42 @@
  * @type {Function}
  * @private
  */
-const originalSetTimeout = window.setTimeout;
+const originalSetTimeout = self.setTimeout;
 
 /**
  * Reference to the original 'clearTimeout' function.
  * @type {Function}
  * @private
  */
-const originalClearTimeout = window.clearTimeout;
+const originalClearTimeout = self.clearTimeout;
 
 /**
  * Reference to the original 'setInterval' function.
  * @type {Function}
  * @private
  */
-const originalSetInterval = window.setInterval;
+const originalSetInterval = self.setInterval;
 
 /**
  * Reference to the original 'clearInterval' function.
  * @type {Function}
  * @private
  */
-const originalClearInterval = window.clearInterval;
+const originalClearInterval = self.clearInterval;
 
 /**
  * Reference to the original 'requestAnimationFrame' function.
  * @type {Function}
  * @private
  */
-const originalRequestAnimationFrame = window.requestAnimationFrame;
+const originalRequestAnimationFrame = self.requestAnimationFrame;
 
 /**
  * Reference to the original 'cancelAnimationFrame' function.
  * @type {Function}
  * @private
  */
-const originalCancelAnimationFrame = window.cancelAnimationFrame;
+const originalCancelAnimationFrame = self.cancelAnimationFrame;
 
 /**
  * Current index generated for a ticker method.
@@ -69,11 +69,11 @@ let currentTime = 0;
 let delta = 0;
 
 /**
- * Flag used to toggle the window functions with the ticker ones.
+ * Flag used to toggle the scope functions with the ticker ones.
  * @type {Boolean}
  * @private
  */
-let useWindowFunctions = true;
+let useScopeFunctions = true;
 
 /**
  * Running status of the ticker.
@@ -101,7 +101,7 @@ const tickerCallbacks = {};
  * @returns {Number}
  */
 const getTime = () => {
-    if (window.performance) {
+    if (self.performance) {
         return performance.now();
     } else {
         return Date.now();
@@ -228,15 +228,15 @@ class TickerService {
 
     constructor() {
         // Force the service to replace the JavaScript timing functions with the service ones.
-        this.useWindowFunctions = false;
+        this.useScopeFunctions = false;
 
         // Export new timing functions along side the usual ones.
-        window.setAnimationLoop = (...params) => this.setAnimationLoop(...params);
-        window.clearAnimationLoop = (index) => this.clearAnimationLoop(index);
-        window.setCounter = (...params) => this.setCounter(...params);
-        window.clearCounter = (index) => this.clearCounter(index);
-        window.sleep = (time) => this.sleep(time);
-        window.frame = () => this.frame();
+        self.setAnimationLoop = (...params) => this.setAnimationLoop(...params);
+        self.clearAnimationLoop = (index) => this.clearAnimationLoop(index);
+        self.setCounter = (...params) => this.setCounter(...params);
+        self.clearCounter = (index) => this.clearCounter(index);
+        self.sleep = (time) => this.sleep(time);
+        self.frame = () => this.frame();
 
         // Start the service.
         this.start();
@@ -288,30 +288,30 @@ class TickerService {
     }
 
     /**
-     * Check if the service is using the window timing function.
+     * Check if the service is using the scope timing function.
      * @returns {Boolean}
      */
-    get useWindowFunctions() {
-        return useWindowFunctions;
+    get useScopeFunctions() {
+        return useScopeFunctions;
     }
 
     /**
      * Toggle the timing function from the default JavaScript once to the service once and vice-versa.
      * @param {Boolean} value
      */
-    set useWindowFunctions(value) {
+    set useScopeFunctions(value) {
         value = Boolean(value);
 
-        if (value !== useWindowFunctions)
+        if (value !== useScopeFunctions)
         {
-            window.setTimeout = value ? originalSetTimeout : (...params) => this.setTimeout(...params);
-            window.clearTimeout = value ? originalClearTimeout : (index) => this.clearTimeout(index);
-            window.setInterval = value ? originalSetInterval : (...params) => this.setInterval(...params);
-            window.clearInterval = value ? originalClearInterval : (index) => this.clearInterval(index);
-            window.requestAnimationFrame = value ? originalRequestAnimationFrame : (...params) => this.requestAnimationFrame(...params);
-            window.cancelAnimationFrame = value ? originalCancelAnimationFrame : (index) => this.cancelAnimationFrame(index);
+            self.setTimeout = value ? originalSetTimeout : (...params) => this.setTimeout(...params);
+            self.clearTimeout = value ? originalClearTimeout : (index) => this.clearTimeout(index);
+            self.setInterval = value ? originalSetInterval : (...params) => this.setInterval(...params);
+            self.clearInterval = value ? originalClearInterval : (index) => this.clearInterval(index);
+            self.requestAnimationFrame = value ? originalRequestAnimationFrame : (...params) => this.requestAnimationFrame(...params);
+            self.cancelAnimationFrame = value ? originalCancelAnimationFrame : (index) => this.cancelAnimationFrame(index);
 
-            useWindowFunctions = value;
+            useScopeFunctions = value;
         }
     }
 
