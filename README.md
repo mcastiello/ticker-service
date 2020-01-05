@@ -88,7 +88,7 @@ async function myFunction() {
 Using the asynchronous functions will allow you to create intervals or animation loops without the need of a callback.
 ```javascript
 async function myInterval() {
-    while (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 100; i++) {
         console.log("Async Interval", i);
         
         await sleep(100);
