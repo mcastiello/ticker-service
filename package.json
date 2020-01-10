@@ -13,7 +13,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mcastiello/ticker-service.git"
-  },
+  },,
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
   "keywords": ["Ticker", "Timeout", "Timing Functions", "Animation Loop"],
   "author": "Marco Castiello",
   "license": "ISC",
