@@ -1,6 +1,6 @@
 {
   "name": "ticker-service",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A service used to create animation loops in a simple way and to keep everything in sync within an app.",
   "main": "src/ticker-service.js",
   "directories": {
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/mcastiello/ticker-service.git"
   },
-  "keywords": [],
+  "keywords": ["Ticker", "Timeout", "Timing Functions", "Animation Loop"],
   "author": "Marco Castiello",
   "license": "ISC",
   "bugs": {
