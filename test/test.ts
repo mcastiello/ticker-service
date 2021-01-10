@@ -13,7 +13,8 @@ const originalClearInterval = self.clearInterval;
 const originalRequestAnimationFrame = self.requestAnimationFrame;
 const originalCancelAnimationFrame = self.cancelAnimationFrame;
 
-const ticker = require('../src/ticker-service').default;
+const TickerService = require('../src/TickerService').default;
+const ticker = new TickerService();
 
 describe('Ticker Initialisation', () => {
     it("should replace timing functions with internal ones", () => {
@@ -60,7 +61,7 @@ describe("Ticker Timing Functions", () => {
         const initial = Date.now();
         const timeout = 1000;
 
-        await sleep(timeout);
+        await ticker.sleep(timeout);
 
         const final = Date.now();
 
@@ -69,7 +70,7 @@ describe("Ticker Timing Functions", () => {
     it("should execute in the next frame", async () => {
         const initial = Date.now();
 
-        await frame();
+        await ticker.frame();
 
         const final = Date.now();
 
@@ -84,7 +85,7 @@ describe("Ticker Timing Functions", () => {
             time += delta;
         }, 100, 5);
 
-        await sleep(1000);
+        await ticker.sleep(1000);
 
         expect(counter).toBe(5);
         expect(time >= 500).toBeTruthy();
